@@ -2,9 +2,9 @@
 <html lang="zh">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>减脂打卡中心</title>
-  <style>
+<style>
     :root {
       color-scheme: light dark;
       font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
@@ -14,6 +14,9 @@
       --card: #ffffff;
       --shadow: 0 10px 40px rgba(0,0,0,0.08);
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       background: var(--bg);
@@ -21,32 +24,28 @@
       display: flex;
       justify-content: center;
       padding: 32px 16px 64px;
+      color: #1d1d1f;
     }
     main {
-      width: min(960px, 100%);
+      width: min(1080px, 100%);
     }
     header {
       margin-bottom: 24px;
     }
     h1 {
       margin: 0;
-      font-size: clamp(28px, 4vw, 40px);
-      color: #111;
+      font-size: clamp(28px, 4vw, 42px);
     }
     header p {
       margin: 8px 0 0;
       color: #555;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
     }
     section {
       background: var(--card);
       border-radius: 18px;
       padding: 20px 24px 24px;
       box-shadow: var(--shadow);
+      margin-bottom: 24px;
     }
     section h2 {
       margin: 0 0 12px;
@@ -65,14 +64,18 @@
       margin-top: 12px;
       flex-wrap: wrap;
     }
-    input, button {
+    input,
+    button,
+    select {
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 10px 14px;
       font-size: 15px;
       font-family: inherit;
+      min-height: 44px;
     }
-    input {
+    input,
+    select {
       flex: 1;
       min-width: 160px;
       background: #fff;
@@ -84,9 +87,36 @@
       color: #fff;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    button:hover {
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    button:hover:not([disabled]) {
       transform: translateY(-1px);
       box-shadow: 0 6px 20px rgba(56, 180, 139, 0.3);
+    }
+    .field-group {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 13px;
+      color: #4a5568;
+    }
+    .hint {
+      font-size: 13px;
+      color: #777;
+      margin-top: 8px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
     }
     ul {
       list-style: none;
@@ -123,6 +153,7 @@
       color: #888;
       font-size: 14px;
       padding: 0 4px;
+      min-height: auto;
       box-shadow: none;
     }
     .todo-actions button:hover {
@@ -146,7 +177,21 @@
     .highlight {
       color: var(--orange);
     }
-    @media (max-width: 540px) {
+    .plan-preview {
+      margin-top: 12px;
+      background: #f4f6fb;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 14px;
+      color: #333;
+      white-space: pre-wrap;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .plan-preview.empty {
+      color: #888;
+    }
+    @media (max-width: 640px) {
       section {
         padding: 18px;
       }
@@ -157,27 +202,68 @@
         width: 100%;
       }
     }
-  </style>
+</style>
 </head>
 <body>
   <main>
     <header>
       <h1>我的减脂打卡中心</h1>
-      <p>记录体重、规划每日待办，帮你稳稳拿下目标身材。</p>
+      <p>记录体重、规划每日待办，结合 AI 定制化方案，帮你稳稳拿下目标身材。</p>
       <p id="today-label"></p>
     </header>
 
-    <section style="margin-bottom: 24px;">
+    <section>
+      <h2>👤 基础信息</h2>
+      <p>填好资料后只保存在当前浏览器，用于为你量身制定计划。</p>
+      <form id="profile-form">
+        <div class="field-group">
+          <label for="profile-gender">性别</label>
+          <select id="profile-gender" required>
+            <option value="">请选择</option>
+            <option value="female">女性</option>
+            <option value="male">男性</option>
+            <option value="other">非二元/其他</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="profile-height">身高（cm）</label>
+          <input id="profile-height" type="number" min="120" max="220" placeholder="例如 168" required>
+        </div>
+        <div class="field-group">
+          <label for="profile-weight">当前体重（kg）</label>
+          <input id="profile-weight" type="number" step="0.1" min="30" max="200" placeholder="例如 65.0" required>
+        </div>
+        <div class="field-group">
+          <label for="profile-target">目标体重（kg，可选）</label>
+          <input id="profile-target" type="number" step="0.1" min="30" max="200" placeholder="例如 55.0">
+        </div>
+        <div class="field-group">
+          <label for="api-key">DeepSeek API Key</label>
+          <input id="api-key" type="password" placeholder="ds-XXXX" autocomplete="off">
+        </div>
+        <button type="submit">保存基础信息</button>
+      </form>
+      <p id="profile-status" class="hint">信息仅存储在本地浏览器。</p>
+      <p class="hint">（若需调用 DeepSeek 生成人工智能方案，请输入有效的 API Key。可随时留空，系统不会保存。）</p>
+    </section>
+
+    <section>
       <h2>🎯 模式选择</h2>
-      <p>选择一套系统化计划，自动生成未来两周的每日代办。</p>
+      <p>支持三种模式，AI 会根据模式目标 + 你的身体数据生成每日待办（含早餐/午餐/晚餐/有氧/无氧/休息）。</p>
       <form id="mode-form">
-        <select id="mode-select">
-          <option value="">自由模式（手动规划）</option>
-          <option value="quickBurn">快速燃脂模式 · 14 天冲刺</option>
-        </select>
+        <div class="field-group">
+          <label for="mode-select">选择模式</label>
+          <select id="mode-select" required>
+            <option value="">自由模式（手动规划）</option>
+            <option value="quickBurn">模式1 · 快速燃脂（14 天减 10kg）</option>
+            <option value="healthy">模式2 · 健康减脂（每周减 2kg）</option>
+            <option value="beauty">模式3 · 丽人塑形（每周减 1kg）</option>
+          </select>
+        </div>
         <button type="submit">生成模式代办</button>
       </form>
       <p id="mode-status">当前为自由模式，可自行添加待办。</p>
+      <div id="plan-preview" class="plan-preview empty">计划生成后会展示最近几天的概要。</div>
     </section>
 
     <div class="grid">
@@ -185,7 +271,7 @@
         <h2>📋 今日待办</h2>
         <p>先列出今天必做事项，完成后勾选即可打卡。</p>
         <form id="todo-form">
-          <input id="todo-input" type="text" placeholder="例如：吃满 120g 蛋白质" required>
+          <input id="todo-input" type="text" placeholder="例如：早餐 250ml 脱脂牛奶 + 40g 燕麦" required>
           <button type="submit">添加</button>
         </form>
         <ul id="todo-list"></ul>
@@ -202,52 +288,68 @@
       </section>
     </div>
 
-    <section style="margin-top: 24px;">
+    <section>
       <h2>📆 近七日概览</h2>
       <div id="history-list"></div>
     </section>
   </main>
 
-  <script>
+<script>
     const STORAGE_KEY = "fat-loss-logs";
+    const CATEGORY_LABELS = {
+      breakfast: "早餐",
+      lunch: "午餐",
+      dinner: "晚餐",
+      cardio: "有氧运动",
+      strength: "无氧运动",
+      recovery: "休息睡眠"
+    };
 
     const todayLabel = document.getElementById("today-label");
     const todoForm = document.getElementById("todo-form");
     const todoInput = document.getElementById("todo-input");
     const todoList = document.getElementById("todo-list");
     const weightForm = document.getElementById("weight-form");
-    const weightInput = document.getElementById("weight-input");
+    const weightInputDaily = document.getElementById("weight-input");
     const weightStatus = document.getElementById("weight-status");
     const historyList = document.getElementById("history-list");
     const modeForm = document.getElementById("mode-form");
     const modeSelect = document.getElementById("mode-select");
     const modeStatus = document.getElementById("mode-status");
+    const planPreview = document.getElementById("plan-preview");
+    const profileForm = document.getElementById("profile-form");
+    const genderSelect = document.getElementById("profile-gender");
+    const profileHeight = document.getElementById("profile-height");
+    const profileWeight = document.getElementById("profile-weight");
+    const profileTarget = document.getElementById("profile-target");
+    const profileStatus = document.getElementById("profile-status");
+    const apiKeyInput = document.getElementById("api-key");
 
     const todayKey = new Date().toISOString().slice(0, 10);
     todayLabel.textContent = `今天：${formatDateLabel(todayKey)}`;
 
-    const MODE_PLANS = {
+    const MODE_CONFIGS = {
       quickBurn: {
-        name: "快速燃脂模式 · 两周减 10kg",
+        name: "模式1 · 快速燃脂（14 天减 10kg）",
         duration: 14,
-        days: [
-          { title: "第1天：代谢启动", todos: ["08:00 200ml 温水+柠檬片开启代谢", "全天碳水控制在 120g 内，优先低 GI", "午后 40 分钟快走或骑行（心率 120-140）", "晚上 10 点前睡觉，杜绝熬夜"] },
-          { title: "第2天：高蛋白补给", todos: ["三餐蛋白质摄入共 130g，均衡分配", "加餐改用低脂酸奶或蛋白粉", "晚餐后 20 分钟拉伸，舒缓肌肉", "睡前记录体感和状态"] },
-          { title: "第3天：力量维度", todos: ["早餐前 10 分钟空腹拉伸+核心激活", "午餐后 30 分钟下肢力量训练（深蹲/箭步蹲）", "训练后 30 分钟内补充 20g 蛋白", "夜间泡脚，放松神经系统"] },
-          { title: "第4天：控盐轻断食", todos: ["今日盐摄入 ≤5g，避免加工食品", "采用 16:8 轻断食窗口（12:00-20:00）", "晚餐以高纤蔬菜+鱼肉为主", "睡前 5 分钟冥想，稳定情绪"] },
-          { title: "第5天：心肺提升", todos: ["上午空腹快走 30 分钟", "下午 Tabata 间歇训练 8 轮", "全天饮水 ≥2500ml，均匀分配", "记录今日体重及心情变化"] },
-          { title: "第6天：恢复+拉伸", todos: ["早餐加入 Omega-3 健康脂肪", "晚间 45 分钟瑜伽/普拉提拉伸", "杜绝含糖饮料，改用白水或茶", "21:30 前进入睡眠准备"] },
-          { title: "第7天：周总结", todos: ["复盘前 6 天饮食是否达标", "进行 20 分钟低冲击有氧（椭圆机/游泳）", "记录当前体重与围度变化", "给自己写一条鼓励语"] },
-          { title: "第8天：高纤维日", todos: ["三餐加入高纤蔬菜与粗粮", "限制精制碳水 80g 内", "下午 30 分钟跳绳或战绳", "保持站立办公 ≥2 小时"] },
-          { title: "第9天：力量进阶", todos: ["早餐补充 30g 蛋白质", "午后上肢力量训练（俯卧撑/划船）", "训练后摄入 500ml 电解质水", "晚上做 15 分钟泡沫轴放松"] },
-          { title: "第10天：排水与睡眠", todos: ["全天控制盐分并补充足量钾（香蕉/菠菜）", "保证午休 20 分钟，缓解压力", "晚餐少油少盐，七分饱", "22:00 前入睡，确保 8 小时"] },
-          { title: "第11天：双有氧日", todos: ["早晚各安排 25 分钟中低强度有氧", "主餐以鱼虾类蛋白为主，低脂烹饪", "下午 10 分钟腹部核心训练", "写下今日能量值（1-10 分）"] },
-          { title: "第12天：肠胃友好", todos: ["早餐添加益生菌或无糖酸奶", "午餐大量绿叶菜+鸡胸肉", "晚间 40 分钟快步走，步频 120+", "睡前热水泡脚 15 分钟"] },
-          { title: "第13天：冲刺日", todos: ["上午 HIT 训练 15 分钟，提升代谢", "全天零糖饮食，避免加工零食", "安排一次 60 分钟深度拉伸或筋膜枪", "记录最想达成的体态细节"] },
-          { title: "第14天：庆功+维护", todos: ["复测体重/围度，记录成果", "做一顿高质量但不暴食的奖励餐", "书写 3 条未来维持计划", "安排 30 分钟低强度有氧，平稳收官"] }
-        ]
+        description: "两周内快速减重 10kg，严格控制碳水和能量摄入，并结合高频有氧 + 无氧训练。",
+        weeklyTarget: "每周减重约 5kg，重点维持高代谢与肌肉质量。"
+      },
+      healthy: {
+        name: "模式2 · 健康减脂（每周减 2kg）",
+        duration: 28,
+        description: "以均衡营养和稳步热量赤字为主，适合长期坚持，兼顾健康与效率。",
+        weeklyTarget: "每周减重 2kg，周期 4 周。"
+      },
+      beauty: {
+        name: "模式3 · 丽人塑形（每周减 1kg）",
+        duration: 42,
+        description: "强调线条雕刻与体态管理，低冲击训练结合高蛋白饮食，循序渐进。",
+        weeklyTarget: "每周减重 1kg，可持续 6 周。"
       }
     };
+
+    const SYSTEM_PROMPT = "你是一名专业的健身与营养指导 AI，需要根据用户身体数据与目标制定可执行的每日计划。务必确保所有任务具备量化指标，并覆盖早餐、午餐、晚餐、有氧运动、无氧运动、休息睡眠六大类别。";
 
     function loadData() {
       try {
@@ -261,6 +363,22 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
+    function getMeta() {
+      const data = loadData();
+      return data._meta || {};
+    }
+
+    function saveMeta(patch) {
+      const data = loadData();
+      data._meta = { ...(data._meta || {}), ...patch };
+      saveData(data);
+    }
+
+    function getProfile() {
+      const meta = getMeta();
+      return meta.profile || { gender: "", height: "", weight: "", target: "" };
+    }
+
     function ensureDay(data, day) {
       if (!data[day]) {
         data[day] = { todos: [], weight: "" };
@@ -269,10 +387,14 @@
 
     function createTodo(text) {
       return {
-        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
         text,
         done: false
       };
+    }
+
+    function getDateKeys(data) {
+      return Object.keys(data).filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key));
     }
 
     function renderDay() {
@@ -310,9 +432,11 @@
 
       const weight = data[todayKey].weight;
       weightStatus.textContent = weight ? `今日体重：${weight} kg` : "今日尚未记录。";
-      weightInput.value = weight || "";
+      weightInputDaily.value = weight || "";
 
       renderHistory(data);
+      refreshModeStatus();
+      refreshPlanPreview();
     }
 
     function addTodo(text) {
@@ -350,7 +474,7 @@
     }
 
     function renderHistory(data) {
-      const days = Object.keys(data).sort((a, b) => b.localeCompare(a)).slice(0, 7);
+      const days = getDateKeys(data).sort((a, b) => b.localeCompare(a)).slice(0, 7);
       historyList.innerHTML = "";
       if (days.length === 0) {
         historyList.innerHTML = "<p>暂无历史记录，今天就开始吧！</p>";
@@ -374,6 +498,28 @@
     function formatDateLabel(dateStr) {
       const date = new Date(dateStr);
       return `${date.getMonth() + 1}月${date.getDate()}日（周${"日一二三四五六"[date.getDay()]}）`;
+  }
+
+    function refreshModeStatus() {
+      const meta = getMeta();
+      if (meta.lastMode) {
+        const { name, generatedAt, duration } = meta.lastMode;
+        const time = new Date(generatedAt).toLocaleString();
+        modeStatus.textContent = `已启用 ${name}，生成于 ${time}，覆盖 ${duration} 天计划。`;
+      } else {
+        modeStatus.textContent = "当前为自由模式，可自行添加待办。";
+      }
+    }
+
+    function refreshPlanPreview() {
+      const meta = getMeta();
+      if (meta.lastMode?.preview) {
+        planPreview.textContent = meta.lastMode.preview;
+        planPreview.classList.remove("empty");
+      } else {
+        planPreview.textContent = "计划生成后会展示最近几天的概要。";
+        planPreview.classList.add("empty");
+      }
     }
 
     todoForm.addEventListener("submit", (event) => {
@@ -387,46 +533,201 @@
 
     weightForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const value = parseFloat(weightInput.value);
+      const value = parseFloat(weightInputDaily.value);
       if (Number.isNaN(value)) return;
       saveWeight(value.toFixed(1));
     });
 
-    modeForm.addEventListener("submit", (event) => {
+    profileForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const modeKey = modeSelect.value;
-      if (!modeKey) {
+      if (!profileForm.checkValidity()) {
+        profileStatus.textContent = "请完整填写必填信息。";
+        return;
+      }
+      const profile = collectProfileFromForm();
+      saveMeta({ profile });
+      profileStatus.textContent = "基础信息已保存（仅保存在本地）。";
+      setTimeout(() => refreshModeStatus(), 300);
+    });
+
+    modeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!modeSelect.value) {
         modeStatus.textContent = "当前为自由模式，可自行添加待办。";
         return;
       }
-      applyMode(modeKey);
+      const profile = collectProfileFromForm();
+      if (!profile.gender || !profile.height || !profile.weight) {
+        modeStatus.textContent = "请先保存完整的基础信息。";
+        return;
+      }
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        modeStatus.textContent = "请填写 DeepSeek API Key，才能调用 AI 生成计划。";
+        return;
+      }
+      await generateModePlan(modeSelect.value, profile, apiKey);
     });
 
-    function applyMode(modeKey) {
-      const plan = MODE_PLANS[modeKey];
-      if (!plan) return;
-
-      const data = loadData();
-      const startDate = new Date();
-
-      for (let i = 0; i < plan.duration; i++) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
-        const key = date.toISOString().slice(0, 10);
-        const dayTodos = plan.days[i] ? plan.days[i].todos : [];
-        data[key] = {
-          ...data[key],
-          todos: dayTodos.map(text => createTodo(text)),
-          weight: data[key]?.weight || ""
-        };
-      }
-
-      saveData(data);
-      modeStatus.textContent = `已启用 ${plan.name}，覆盖今天起未来 ${plan.duration} 天。`;
-      renderDay();
+    function collectProfileFromForm() {
+      return {
+        gender: genderSelect.value,
+        height: Number(profileHeight.value || 0),
+        weight: Number(profileWeight.value || 0),
+        target: profileTarget.value ? Number(profileTarget.value) : ""
+      };
     }
 
+    function populateProfileForm() {
+      const profile = getProfile();
+      if (profile.gender) genderSelect.value = profile.gender;
+      if (profile.height) profileHeight.value = profile.height;
+      if (profile.weight) profileWeight.value = profile.weight;
+      if (profile.target) profileTarget.value = profile.target;
+    }
+
+    async function generateModePlan(modeKey, profile, apiKey) {
+      const config = MODE_CONFIGS[modeKey];
+      if (!config) return;
+      modeForm.querySelector("button[type='submit']").disabled = true;
+      modeStatus.textContent = `正在为你调用 DeepSeek，生成 ${config.name} 计划…`;
+      try {
+        const plan = await callChatGPT(config, profile, apiKey);
+        applyPlan(plan);
+        const previewText = plan.dailyTasks
+          .slice(0, 3)
+          .map(day => {
+            const items = day.tasks
+              .map(task => `· [${CATEGORY_LABELS[task.category] || task.category}] ${task.text}（指标：${task.metric}）`)
+              .join("\n");
+            return `${day.title}\n${items}`;
+          })
+          .join("\n\n");
+        saveMeta({
+          lastMode: {
+            name: config.name,
+            duration: plan.duration,
+            generatedAt: new Date().toISOString(),
+            preview: previewText,
+            profile
+          }
+        });
+        planPreview.textContent = previewText;
+        planPreview.classList.remove("empty");
+        modeStatus.textContent = `已生成 ${config.name}，覆盖 ${plan.duration} 天，已写入待办。`;
+        apiKeyInput.value = "";
+        profileStatus.textContent = "已基于当前基础信息生成模式计划。";
+      } catch (error) {
+        console.error(error);
+        modeStatus.textContent = `生成失败：${error.message}`;
+      } finally {
+        modeForm.querySelector("button[type='submit']").disabled = false;
+        renderDay();
+      }
+    }
+
+    const MODEL_ENDPOINT = {
+      url: "https://api.deepseek.com/v1/chat/completions",
+      model: "deepseek-chat"
+    };
+
+    async function callChatGPT(config, profile, apiKey) {
+      const prompt = buildPlanPrompt(config, profile);
+      const response = await fetch(MODEL_ENDPOINT.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: MODEL_ENDPOINT.model,
+          temperature: 0.7,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error?.message || "DeepSeek 接口返回错误");
+      }
+      const content = result.choices?.[0]?.message?.content?.trim();
+      if (!content) {
+        throw new Error("未收到有效的计划内容");
+      }
+      const cleanJson = stripJsonFence(content);
+      return JSON.parse(cleanJson);
+    }
+
+    function buildPlanPrompt(config, profile) {
+      return `
+请生成 ${config.duration} 天的每日计划，模式说明：${config.description}。用户数据如下：
+- 性别：${profile.gender}
+- 身高：${profile.height} cm
+- 当前体重：${profile.weight} kg
+- 目标体重：${profile.target || "未填写"}
+- 模式目标：${config.weeklyTarget}
+
+要求：
+1. 每天必须包含早餐、午餐、晚餐、有氧运动、无氧运动、休息睡眠共 6 条任务。
+2. 每项任务都要给出明确的量化数字（克数、毫升、分钟、心率区间、组数等）。
+3. 控制热量与训练强度符合模式目标，注意不同性别、BMI 对能量摄入的影响。
+4. 输出严格 JSON（UTF-8），不包含任何额外文字，结构如下：
+{
+  "planName": "字符串",
+  "duration": 数字,
+  "notes": "总体说明",
+  "dailyTasks": [
+    {
+      "day": 1,
+      "title": "第1天标题",
+      "tasks": [
+        { "category": "breakfast", "text": "描述", "metric": "量化指标" },
+        { "category": "lunch", "text": "...", "metric": "..." },
+        { "category": "dinner", "text": "...", "metric": "..." },
+        { "category": "cardio", "text": "...", "metric": "..." },
+        { "category": "strength", "text": "...", "metric": "..." },
+        { "category": "recovery", "text": "...", "metric": "..." }
+      ]
+    },
+    ...
+  ]
+}
+务必返回合法 JSON。`;
+    }
+
+    function stripJsonFence(text) {
+      if (text.startsWith("```")) {
+        return text.replace(/```json|```/g, "").trim();
+      }
+      return text;
+    }
+
+    function applyPlan(plan) {
+      const data = loadData();
+      const startDate = new Date();
+      plan.dailyTasks.forEach((dayPlan, index) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + index);
+        const key = date.toISOString().slice(0, 10);
+        const todos = dayPlan.tasks.map(task => {
+          const label = CATEGORY_LABELS[task.category] || task.category;
+          const metric = task.metric ? `（指标：${task.metric}）` : "";
+          return createTodo(`[${label}] ${task.text}${metric}`);
+        });
+        data[key] = {
+          ...data[key],
+          todos,
+          weight: data[key]?.weight || ""
+        };
+      });
+      saveData(data);
+    }
+
+    populateProfileForm();
     renderDay();
-  </script>
+</script>
 </body>
 </html>
