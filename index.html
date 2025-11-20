@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>减脂打卡中心</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      --green: #38b48b;
+      --orange: #ff9f45;
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 64px;
+    }
+    main {
+      width: min(960px, 100%);
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      color: #111;
+    }
+    header p {
+      margin: 8px 0 0;
+      color: #555;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    section {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 20px 24px 24px;
+      box-shadow: var(--shadow);
+    }
+    section h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    section p {
+      margin: 6px 0;
+      color: #666;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    input, button {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    input {
+      flex: 1;
+      min-width: 160px;
+      background: #fff;
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      background: var(--green);
+      color: #fff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(56, 180, 139, 0.3);
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f4f6fb;
+    }
+    .todo-item.completed {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+    .todo-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    .todo-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+    }
+    .todo-actions button {
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 14px;
+      padding: 0 4px;
+      box-shadow: none;
+    }
+    .todo-actions button:hover {
+      color: #111;
+      transform: none;
+    }
+    #history-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .history-card {
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: #f4f6fb;
+    }
+    .history-card strong {
+      color: #333;
+    }
+    .highlight {
+      color: var(--orange);
+    }
+    @media (max-width: 540px) {
+      section {
+        padding: 18px;
+      }
+      form {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>我的减脂打卡中心</h1>
+      <p>记录体重、规划每日待办，帮你稳稳拿下目标身材。</p>
+      <p id="today-label"></p>
+    </header>
+
+    <section style="margin-bottom: 24px;">
+      <h2>🎯 模式选择</h2>
+      <p>选择一套系统化计划，自动生成未来两周的每日代办。</p>
+      <form id="mode-form">
+        <select id="mode-select">
+          <option value="">自由模式（手动规划）</option>
+          <option value="quickBurn">快速燃脂模式 · 14 天冲刺</option>
+        </select>
+        <button type="submit">生成模式代办</button>
+      </form>
+      <p id="mode-status">当前为自由模式，可自行添加待办。</p>
+    </section>
+
+    <div class="grid">
+      <section>
+        <h2>📋 今日待办</h2>
+        <p>先列出今天必做事项，完成后勾选即可打卡。</p>
+        <form id="todo-form">
+          <input id="todo-input" type="text" placeholder="例如：吃满 120g 蛋白质" required>
+          <button type="submit">添加</button>
+        </form>
+        <ul id="todo-list"></ul>
+      </section>
+
+      <section>
+        <h2>⚖️ 体重记录</h2>
+        <p>输入今日体重，系统会自动保存趋势。</p>
+        <form id="weight-form">
+          <input id="weight-input" type="number" step="0.1" min="30" max="200" placeholder="单位：kg" required>
+          <button type="submit">记录体重</button>
+        </form>
+        <p id="weight-status">今日尚未记录。</p>
+      </section>
+    </div>
+
+    <section style="margin-top: 24px;">
+      <h2>📆 近七日概览</h2>
+      <div id="history-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "fat-loss-logs";
+
+    const todayLabel = document.getElementById("today-label");
+    const todoForm = document.getElementById("todo-form");
+    const todoInput = document.getElementById("todo-input");
+    const todoList = document.getElementById("todo-list");
+    const weightForm = document.getElementById("weight-form");
+    const weightInput = document.getElementById("weight-input");
+    const weightStatus = document.getElementById("weight-status");
+    const historyList = document.getElementById("history-list");
+    const modeForm = document.getElementById("mode-form");
+    const modeSelect = document.getElementById("mode-select");
+    const modeStatus = document.getElementById("mode-status");
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+    todayLabel.textContent = `今天：${formatDateLabel(todayKey)}`;
+
+    const MODE_PLANS = {
+      quickBurn: {
+        name: "快速燃脂模式 · 两周减 10kg",
+        duration: 14,
+        days: [
+          { title: "第1天：代谢启动", todos: ["08:00 200ml 温水+柠檬片开启代谢", "全天碳水控制在 120g 内，优先低 GI", "午后 40 分钟快走或骑行（心率 120-140）", "晚上 10 点前睡觉，杜绝熬夜"] },
+          { title: "第2天：高蛋白补给", todos: ["三餐蛋白质摄入共 130g，均衡分配", "加餐改用低脂酸奶或蛋白粉", "晚餐后 20 分钟拉伸，舒缓肌肉", "睡前记录体感和状态"] },
+          { title: "第3天：力量维度", todos: ["早餐前 10 分钟空腹拉伸+核心激活", "午餐后 30 分钟下肢力量训练（深蹲/箭步蹲）", "训练后 30 分钟内补充 20g 蛋白", "夜间泡脚，放松神经系统"] },
+          { title: "第4天：控盐轻断食", todos: ["今日盐摄入 ≤5g，避免加工食品", "采用 16:8 轻断食窗口（12:00-20:00）", "晚餐以高纤蔬菜+鱼肉为主", "睡前 5 分钟冥想，稳定情绪"] },
+          { title: "第5天：心肺提升", todos: ["上午空腹快走 30 分钟", "下午 Tabata 间歇训练 8 轮", "全天饮水 ≥2500ml，均匀分配", "记录今日体重及心情变化"] },
+          { title: "第6天：恢复+拉伸", todos: ["早餐加入 Omega-3 健康脂肪", "晚间 45 分钟瑜伽/普拉提拉伸", "杜绝含糖饮料，改用白水或茶", "21:30 前进入睡眠准备"] },
+          { title: "第7天：周总结", todos: ["复盘前 6 天饮食是否达标", "进行 20 分钟低冲击有氧（椭圆机/游泳）", "记录当前体重与围度变化", "给自己写一条鼓励语"] },
+          { title: "第8天：高纤维日", todos: ["三餐加入高纤蔬菜与粗粮", "限制精制碳水 80g 内", "下午 30 分钟跳绳或战绳", "保持站立办公 ≥2 小时"] },
+          { title: "第9天：力量进阶", todos: ["早餐补充 30g 蛋白质", "午后上肢力量训练（俯卧撑/划船）", "训练后摄入 500ml 电解质水", "晚上做 15 分钟泡沫轴放松"] },
+          { title: "第10天：排水与睡眠", todos: ["全天控制盐分并补充足量钾（香蕉/菠菜）", "保证午休 20 分钟，缓解压力", "晚餐少油少盐，七分饱", "22:00 前入睡，确保 8 小时"] },
+          { title: "第11天：双有氧日", todos: ["早晚各安排 25 分钟中低强度有氧", "主餐以鱼虾类蛋白为主，低脂烹饪", "下午 10 分钟腹部核心训练", "写下今日能量值（1-10 分）"] },
+          { title: "第12天：肠胃友好", todos: ["早餐添加益生菌或无糖酸奶", "午餐大量绿叶菜+鸡胸肉", "晚间 40 分钟快步走，步频 120+", "睡前热水泡脚 15 分钟"] },
+          { title: "第13天：冲刺日", todos: ["上午 HIT 训练 15 分钟，提升代谢", "全天零糖饮食，避免加工零食", "安排一次 60 分钟深度拉伸或筋膜枪", "记录最想达成的体态细节"] },
+          { title: "第14天：庆功+维护", todos: ["复测体重/围度，记录成果", "做一顿高质量但不暴食的奖励餐", "书写 3 条未来维持计划", "安排 30 分钟低强度有氧，平稳收官"] }
+        ]
+      }
+    };
+
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function ensureDay(data, day) {
+      if (!data[day]) {
+        data[day] = { todos: [], weight: "" };
+      }
+    }
+
+    function createTodo(text) {
+      return {
+        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        text,
+        done: false
+      };
+    }
+
+    function renderDay() {
+      const data = loadData();
+      ensureDay(data, todayKey);
+
+      todoList.innerHTML = "";
+      data[todayKey].todos.forEach(todo => {
+        const li = document.createElement("li");
+        li.className = `todo-item ${todo.done ? "completed" : ""}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.done;
+        checkbox.addEventListener("change", () => toggleTodo(todo.id));
+
+        const span = document.createElement("span");
+        span.textContent = todo.text;
+
+        const actions = document.createElement("div");
+        actions.className = "todo-actions";
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.textContent = "删除";
+        delBtn.addEventListener("click", () => deleteTodo(todo.id));
+
+        actions.appendChild(delBtn);
+
+        li.appendChild(checkbox);
+        li.appendChild(span);
+        li.appendChild(actions);
+        todoList.appendChild(li);
+      });
+
+      const weight = data[todayKey].weight;
+      weightStatus.textContent = weight ? `今日体重：${weight} kg` : "今日尚未记录。";
+      weightInput.value = weight || "";
+
+      renderHistory(data);
+    }
+
+    function addTodo(text) {
+      const data = loadData();
+      ensureDay(data, todayKey);
+      data[todayKey].todos.push(createTodo(text));
+      saveData(data);
+      renderDay();
+    }
+
+    function toggleTodo(id) {
+      const data = loadData();
+      ensureDay(data, todayKey);
+      data[todayKey].todos = data[todayKey].todos.map(todo =>
+        todo.id === id ? { ...todo, done: !todo.done } : todo
+      );
+      saveData(data);
+      renderDay();
+    }
+
+    function deleteTodo(id) {
+      const data = loadData();
+      ensureDay(data, todayKey);
+      data[todayKey].todos = data[todayKey].todos.filter(todo => todo.id !== id);
+      saveData(data);
+      renderDay();
+    }
+
+    function saveWeight(value) {
+      const data = loadData();
+      ensureDay(data, todayKey);
+      data[todayKey].weight = value;
+      saveData(data);
+      renderDay();
+    }
+
+    function renderHistory(data) {
+      const days = Object.keys(data).sort((a, b) => b.localeCompare(a)).slice(0, 7);
+      historyList.innerHTML = "";
+      if (days.length === 0) {
+        historyList.innerHTML = "<p>暂无历史记录，今天就开始吧！</p>";
+        return;
+      }
+
+      days.forEach(day => {
+        const { todos, weight } = data[day];
+        const finished = todos.filter(todo => todo.done).length;
+        const card = document.createElement("div");
+        card.className = "history-card";
+        card.innerHTML = `
+          <strong>${formatDateLabel(day)}</strong>
+          <p>体重：${weight ? `<span class="highlight">${weight} kg</span>` : "未记录"}</p>
+          <p>待办完成：${finished}/${todos.length || 1}</p>
+        `;
+        historyList.appendChild(card);
+      });
+    }
+
+    function formatDateLabel(dateStr) {
+      const date = new Date(dateStr);
+      return `${date.getMonth() + 1}月${date.getDate()}日（周${"日一二三四五六"[date.getDay()]}）`;
+    }
+
+    todoForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = todoInput.value.trim();
+      if (!value) return;
+      addTodo(value);
+      todoInput.value = "";
+      todoInput.focus();
+    });
+
+    weightForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = parseFloat(weightInput.value);
+      if (Number.isNaN(value)) return;
+      saveWeight(value.toFixed(1));
+    });
+
+    modeForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const modeKey = modeSelect.value;
+      if (!modeKey) {
+        modeStatus.textContent = "当前为自由模式，可自行添加待办。";
+        return;
+      }
+      applyMode(modeKey);
+    });
+
+    function applyMode(modeKey) {
+      const plan = MODE_PLANS[modeKey];
+      if (!plan) return;
+
+      const data = loadData();
+      const startDate = new Date();
+
+      for (let i = 0; i < plan.duration; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        const key = date.toISOString().slice(0, 10);
+        const dayTodos = plan.days[i] ? plan.days[i].todos : [];
+        data[key] = {
+          ...data[key],
+          todos: dayTodos.map(text => createTodo(text)),
+          weight: data[key]?.weight || ""
+        };
+      }
+
+      saveData(data);
+      modeStatus.textContent = `已启用 ${plan.name}，覆盖今天起未来 ${plan.duration} 天。`;
+      renderDay();
+    }
+
+    renderDay();
+  </script>
+</body>
+</html>
